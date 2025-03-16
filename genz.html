@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice-to-Voice Gen Z Translator</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #5e17eb;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .mic-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .mic-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #5e17eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 10px rgba(94, 23, 235, 0.3);
+            transition: all 0.2s ease;
+        }
+        .mic-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(94, 23, 235, 0.4);
+        }
+        .mic-button:active {
+            transform: scale(0.95);
+        }
+        .mic-button.recording {
+            animation: pulse 1.5s infinite;
+            background-color: #e74c3c;
+        }
+        .mic-icon {
+            width: 50px;
+            height: 50px;
+            fill: white;
+        }
+        .status-bar {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+            height: 24px;
+            color: #666;
+        }
+        .transcript-container {
+            display: flex;
+            margin: 20px 0;
+            gap: 20px;
+        }
+        .transcript-box {
+            flex: 1;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 100px;
+            position: relative;
+        }
+        .transcript-label {
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background-color: white;
+            padding: 0 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #666;
+        }
+        #playButton {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            background-color: #5e17eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #playButton:hover {
+            background-color: #4a10c0;
+        }
+        #playButton:disabled {
+            background-color: #b5a1e0;
+            cursor: not-allowed;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #777;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .loading-waves {
+            display: inline-block;
+            position: relative;
+            width: 60px;
+            height: 20px;
+        }
+        .loading-waves div {
+            position: absolute;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #5e17eb;
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loading-waves div:nth-child(1) {
+            left: 8px;
+            animation: loading-waves1 0.6s infinite;
+        }
+        .loading-waves div:nth-child(2) {
+            left: 8px;
+            animation: loading-waves2 0.6s infinite;
+        }
+        .loading-waves div:nth-child(3) {
+            left: 32px;
+            animation: loading-waves2 0.6s infinite;
+        }
+        .loading-waves div:nth-child(4) {
+            left: 56px;
+            animation: loading-waves3 0.6s infinite;
+        }
+        @keyframes loading-waves1 {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+        @keyframes loading-waves3 {
+            0% { transform: scale(1); }
+            100% { transform: scale(0); }
+        }
+        @keyframes loading-waves2 {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(24px, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice-to-Voice Gen Z Translator</h1>
+        
+        <div class="mic-container">
+            <div class="mic-button" id="micButton">
+                <svg class="mic-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+                </svg>
+            </div>
+        </div>
+        
+        <div class="status-bar" id="statusBar">Tap the mic to start speaking</div>
+        
+        <div class="transcript-container">
+            <div class="transcript-box">
+                <div class="transcript-label">You said:</div>
+                <div id="originalText"></div>
+            </div>
+            <div class="transcript-box">
+                <div class="transcript-label">Gen Z translation:</div>
+                <div id="genZText"></div>
+            </div>
+        </div>
+        
+        <button id="playButton" disabled>Play Gen Z Translation</button>
+        
+        <div class="footer">
+            <p>Made with 💯 vibes only</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Elements
+            const micButton = document.getElementById('micButton');
+            const statusBar = document.getElementById('statusBar');
+            const originalTextElement = document.getElementById('originalText');
+            const genZTextElement = document.getElementById('genZText');
+            const playButton = document.getElementById('playButton');
+            
+            // Speech recognition setup
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (!SpeechRecognition) {
+                statusBar.textContent = "Speech recognition not supported in this browser. Try Chrome!";
+                micButton.style.backgroundColor = "#888";
+                return;
+            }
+            
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            let isRecording = false;
+            let finalTranscript = '';
+            let genZTranslation = '';
+            
+            // Gen Z conversion rules
+            const genZDictionary = {
+                // Common replacements
+                "cool": "bussin",
+                "very": "mad",
+                "really": "fr",
+                "for real": "fr",
+                "friend": "bestie",
+                "friends": "besties",
+                "amazing": "fire",
+                "good": "valid",
+                "bad": "mid",
+                "extremely": "lowkey",
+                "definitely": "no cap",
+                "yes": "bet",
+                "no": "cap",
+                "what": "what the actual",
+                "seriously": "deadass",
+                "crazy": "wildin",
+                "laughing": "crying",
+                "funny": "sending me",
+                "excited": "hyped",
+                "absolute": "straight",
+                "absolutely": "straight up",
+                "truth": "facts",
+                "true": "facts",
+                "awesome": "elite",
+                "excellent": "goated",
+                "upset": "pressed",
+                "angry": "pressed",
+                "relatable": "mood",
+                "tired": "dead",
+                "exhausted": "dead",
+                "impressive": "hits different",
+                "interesting": "slaps",
+                "boring": "basic",
+                "authentic": "real one",
+                "love": "stan",
+                "great": "slays",
+                "oh my god": "omg",
+                "flirting": "rizz",
+                "style": "aesthetic",
+                "knowledge": "tea",
+                "gossip": "tea",
+                "information": "tea",
+                "suspicious": "sus",
+                "weird": "sus",
+                "attractive": "a vibe",
+                "understand": "vibe with",
+                "parents": "the rents",
+                "embarrassing": "cringe",
+                "embarrassed": "cringed",
+                "talking": "spilling",
+                "nice": "clean",
+                "stupid": "sus",
+                "agree": "cosign",
+                "look": "peep",
+                "see": "peep",
+                "expensive": "boujee",
+                "fancy": "boujee",
+                "rich": "boujee"
+            };
+            
+            // Phrases to add at beginning/end
+            const genZPrefixes = [
+                "Bestie, ",
+                "Listen, ",
+                "No cap, ",
+                "Deadass, ",
+                "Fr fr, ",
+                "I mean, ",
+                "Like literally, ",
+                "Ngl, ",
+                "Bruh, ",
+                "Lowkey, ",
+                "Highkey, ",
+                "Yo, ",
+                "Straight up, ",
+                "Tbh, ",
+                "Vibes check: ",
+                "It's giving ",
+                ""
+            ];
+            
+            const genZSuffixes = [
+                " fr",
+                " no cap",
+                " tbh",
+                " lowkey",
+                " tho",
+                " ngl",
+                " and I stand by that",
+                " it's giving main character energy",
+                " period",
+                " sheesh",
+                " I'm dead",
+                " istg",
+                " slay",
+                " not me being obsessed",
+                " living for this",
+                " and that's on periodt",
+                " respectfully",
+                " *skull emoji*",
+                " *crying emoji*",
+                ""
+            ];
+            
+            // Gen Z patterns
+            const replaceGenZPatterns = (text) => {
+                let result = text.toLowerCase();
+                
+                // Replace dictionary words
+                for (const [standard, genZ] of Object.entries(genZDictionary)) {
+                    const regex = new RegExp(`\\b${standard}\\b`, 'gi');
+                    result = result.replace(regex, genZ);
+                }
+                
+                // Add random Gen Z prefix (40% chance)
+                if (Math.random() < 0.4) {
+                    const randomPrefix = genZPrefixes[Math.floor(Math.random() * genZPrefixes.length)];
+                    result = randomPrefix + result;
+                }
+                
+                // Add random Gen Z suffix (50% chance)
+                if (Math.random() < 0.5) {
+                    const randomSuffix = genZSuffixes[Math.floor(Math.random() * genZSuffixes.length)];
+                    result = result + randomSuffix;
+                }
+                
+                // Replace "I" with "me" in some contexts (20% chance)
+                if (Math.random() < 0.2) {
+                    result = result.replace(/\bi\b/g, "me");
+                }
+                
+                // Add slang patterns
+                result = result
+                    // Repetition for emphasis
+                    .replace(/\b(yes|yeah|no)\b/gi, match => match + " " + match)
+                    // Abbreviate words
+                    .replace(/\bbecause\b/gi, "bc")
+                    .replace(/\byou\b/gi, "u")
+                    .replace(/\byour\b/gi, "ur")
+                    .replace(/\bthat\b/gi, "dat")
+                    .replace(/\bwith\b/gi, "w/")
+                    .replace(/\bwithout\b/gi, "w/o")
+                    .replace(/\bto be honest\b/gi, "tbh")
+                    .replace(/\bin my opinion\b/gi, "imo")
+                    .replace(/\bi don't know\b/gi, "idk")
+                    .replace(/\bi swear to god\b/gi, "istg")
+                    .replace(/\bthank you\b/gi, "ty")
+                    .replace(/\bi love you\b/gi, "ily")
+                    .replace(/\bon god\b/gi, "ong")
+                    .replace(/\bfor real\b/gi, "fr")
+                    .replace(/\bnot going to lie\b/gi, "ngl")
+                    .replace(/\bto be fair\b/gi, "tbf")
+                    .replace(/\boh my god\b/gi, "omg");
+                
+                // Convert to sentence case but keep abbreviations as is
+                result = result.charAt(0).toUpperCase() + result.slice(1);
+                
+                return result;
+            };
+            
+            // Create loading animation element
+            const createLoadingElement = () => {
+                const loadingWaves = document.createElement('div');
+                loadingWaves.className = 'loading-waves';
+                for (let i = 0; i < 4; i++) {
+                    const dot = document.createElement('div');
+                    loadingWaves.appendChild(dot);
+                }
+                return loadingWaves;
+            };
+            
+            // Event listeners for recognition
+            recognition.onstart = () => {
+                isRecording = true;
+                micButton.classList.add('recording');
+                statusBar.textContent = "Listening...";
+                finalTranscript = '';
+                originalTextElement.textContent = '';
+                genZTextElement.textContent = '';
+                playButton.disabled = true;
+            };
+            
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                
+                originalTextElement.textContent = finalTranscript || interimTranscript;
+            };
+            
+            recognition.onend = () => {
+                isRecording = false;
+                micButton.classList.remove('recording');
+                
+                if (finalTranscript) {
+                    statusBar.textContent = "Translating...";
+                    
+                    // Add loading animation
+                    const loadingElement = createLoadingElement();
+                    statusBar.innerHTML = '';
+                    statusBar.appendChild(loadingElement);
+                    
+                    // Simulate API delay
+                    setTimeout(() => {
+                        // Generate Gen Z translation
+                        genZTranslation = replaceGenZPatterns(finalTranscript);
+                        genZTextElement.textContent = genZTranslation;
+                        
+                        // Update status
+                        statusBar.textContent = "Translation complete!";
+                        playButton.disabled = false;
+                    }, 800);
+                } else {
+                    statusBar.textContent = "No speech detected. Try again?";
+                }
+            };
+            
+            recognition.onerror = (event) => {
+                isRecording = false;
+                micButton.classList.remove('recording');
+                statusBar.textContent = `Error occurred: ${event.error}`;
+            };
+            
+            // Mic button click handler
+            micButton.addEventListener('click', () => {
+                if (isRecording) {
+                    recognition.stop();
+                } else {
+                    recognition.start();
+                }
+            });
+            
+            // Play button functionality for speech synthesis
+            playButton.addEventListener('click', () => {
+                if (!genZTranslation) return;
+                
+                // Speech synthesis
+                const utterance = new SpeechSynthesisUtterance(genZTranslation);
+                utterance.rate = 1.1; // Slightly faster than normal
+                utterance.pitch = 1.1; // Slightly higher pitch
+                
+                // Different voice if available
+                const voices = window.speechSynthesis.getVoices();
+                const youngVoices = voices.filter(voice => 
+                    voice.lang.startsWith('en-') && 
+                    !voice.name.includes('Microsoft')
+                );
+                
+                if (youngVoices.length > 0) {
+                    utterance.voice = youngVoices[Math.floor(Math.random() * youngVoices.length)];
+                }
+                
+                // Status update
+                statusBar.textContent = "Playing translation...";
+                playButton.disabled = true;
+                
+                // Play the speech
+                window.speechSynthesis.speak(utterance);
+                
+                // When speech ends
+                utterance.onend = () => {
+                    statusBar.textContent = "Ready for another translation";
+                    playButton.disabled = false;
+                };
+            });
+            
+            // Initialize voice list for speech synthesis
+            if ('speechSynthesis' in window) {
+                // Firefox needs this
+                window.speechSynthesis.onvoiceschanged = () => {
+                    window.speechSynthesis.getVoices();
+                };
+                // Get the voices right away (for Chrome)
+                window.speechSynthesis.getVoices();
+            } else {
+                playButton.disabled = true;
+                playButton.textContent = "Speech synthesis not supported";
+            }
+        });
+    </script>
+</body>
+</html>
